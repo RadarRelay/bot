@@ -17,7 +17,7 @@ export class Balances<T extends BaseAccount> {
    */
   public static async getAllTokenBalances(rr: RadarRelay<BaseAccount>) {
     const balances = {};
-    const total = rr.tokens.size();
+    const total = rr.tokens.size;
 
     // get ETH balance
     const ethBal = await rr.account.getEthBalanceAsync();

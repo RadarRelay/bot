@@ -1,7 +1,7 @@
 
 # Params
-radarRelayRestEndpoint: 'https://api.kovan.radarrelay.com/v0'
-radarRelayWebSocketEndpoint: 'wss://api.kovan.radarrelay.com/ws'
+radarRelayRestEndpoint: 'https://api.kovan.radarrelay.com/v2'
+radarRelayWebSocketEndpoint: 'wss://ws.kovan.radarrelay.com/v2'
 dataRpcUrl: 'https://kovan.infura.io/radar'
 wrapThreshold: 0.1 # minimum eth required to trigger a wrap event
 gasPrice: 1 # in gwei

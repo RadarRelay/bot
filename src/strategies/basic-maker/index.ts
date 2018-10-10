@@ -8,7 +8,7 @@ import request = require('request-promise');
 import prompt = require('prompt');
 
 /**
- * Basic Maker Strategy 
+ * Basic Maker Strategy
  *  The Basic Maker strategy is a simple strategy that
  *  utilizes an array of spread percentages to place
  *  orders on a book at varying spread bands ie. % Δ from GBBO
@@ -38,15 +38,23 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
     } catch(err) {
       console.log(colors.red(err.message.split('\n')[0]));
     }
-    
+
     try {
-      radar = await this._rr.markets.get(marketToRadarFormat(market)).getTickerAsync();
+      const rrMarket = await this._rr.markets.getAsync(marketToRadarFormat(market));
+      radar = await rrMarket.getTickerAsync();
+
+      // Normalize the bid/ask nomenclature
+      radar.bid = radar.bestBid;
+      radar.ask = radar.bestAsk;
+      delete radar.bestBid;
+      delete radar.bestAsk;
+
       // Explicit string to number conversion to avoid NaN during calculations
-      radar = convertKeysToNumber(radar, ['price', 'size', 'timestamp', 'volume', 'bid', 'ask']);
+      radar = convertKeysToNumber(radar, ['price', 'size', 'timestamp', 'bid', 'ask']);
     } catch(err) {
       console.log(colors.red(err.message.split('\n')[0]));
     }
-    
+
     return {
       gbbo,
       radar
@@ -76,14 +84,14 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
       this.populateSellSideAsync(sellRate, new BigNumber(quantities.totalAskAmountBase), expiration, market)
     ]);
   }
-  
+
   /**
    * populate the bids side of the book
    *
    * @param {number}    buyRate
    * @param {BigNumber} totalBidAmountBase
    * @param {number}    expiration
-   * @param {Market}    market 
+   * @param {Market}    market
    */
   private async populateBuySideAsync(buyRate: number, totalBidAmountBase: BigNumber, expiration: number, market: Market<T>) {
     if(buyRate === 0) return;
@@ -92,7 +100,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
     if (quantity.greaterThan(0)) {
       for (const spreadPercentage of this._conf.algo.spread) {
         buyRate = buyRate - (buyRate * Number(spreadPercentage));
-        
+
         console.log('[Limit Order] BUY', quantity.toNumber(), market.id, 'at', buyRate );
         await market.limitOrderAsync(('BUY' as any),
           quantity,
@@ -104,14 +112,14 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
       }
     }
   }
-  
+
   /**
    * populate the asks side of the book
    *
    * @param {number}    sellRate
    * @param {BigNumber} totalAskAmountBase
    * @param {number}    expiration
-   * @param {Market}    market 
+   * @param {Market}    market
    */
   private async populateSellSideAsync(sellRate: number, totalAskAmountBase: BigNumber, expiration: number, market: Market<T>) {
     if(sellRate === 0) return;
@@ -120,7 +128,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
     if (quantity.greaterThan(0)) {
       for (const spreadPercentage of this._conf.algo.spread) {
         sellRate = sellRate + (sellRate * Number(spreadPercentage));
-        
+
         console.log('[Limit Order] SELL', quantity.toNumber(), market.id, 'at', sellRate );
         await market.limitOrderAsync(('SELL' as any),
           quantity,
@@ -132,7 +140,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
       }
     }
   }
-  
+
   /**
    * Prompt functionality for
    * collecting bid/ask prices
@@ -204,7 +212,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
     }]);
 
     const { bid, ask } = tickerSelection;
-    
+
     // TODO break this into a seperate function
     const spreads = this._conf.algo.spread;
 
@@ -214,13 +222,13 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
       bidQuoteTotal += ((quantities.totalBidAmountBase / spreads.length) * (bid - (bid * Number(spread))));
       askQuoteTotal += ((quantities.totalAskAmountBase / spreads.length) * (ask + (ask * Number(spread))));
     });
-    
+
     const quoteBal = await this._rr.account.getTokenBalanceAsync(radarMarket.quoteTokenAddress);
     const baseBal = await this._rr.account.getTokenBalanceAsync(radarMarket.baseTokenAddress);
 
     let bidPercentageOfQuote = (bidQuoteTotal / quoteBal.toNumber()) * 100;
     let askPercentageOfBase = (quantities.totalAskAmountBase / baseBal.toNumber()) * 100;
-  
+
     if (quantities.totalBidAmountBase && bidPercentageOfQuote > 100) {
       console.log(colors.yellow(`\nBid Amount is greater than balance.`));
       return await this.marketAmountsPrompt(market, tickerSelection, radarMarket);
@@ -230,7 +238,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
       console.log(colors.yellow(`\nAsk Amount is greater than balance.`));
       return await this.marketAmountsPrompt(market, tickerSelection, radarMarket);
     }
-    
+
     askPercentageOfBase = isNaN(askPercentageOfBase) ? 0 : askPercentageOfBase;
     bidPercentageOfQuote = isNaN(bidPercentageOfQuote) ? 0 : bidPercentageOfQuote;
 
@@ -245,7 +253,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
 
     return quantities;
   }
-  
+
   /**
    * Prompt a user for input regarding
    * the current selected market
@@ -267,7 +275,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
     }]);
     const market = marketPrompt.market;
     console.log('selected:', colors.green(market));
-    const radarMarket = this._rr.markets.get(marketToRadarFormat(market));
+    const radarMarket = await this._rr.markets.getAsync(marketToRadarFormat(market));
 
     // Check Balances / Allowances
     // ---------------------------
@@ -343,7 +351,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
       return true;
     }
   }
-  
+
   /**
    * Run this strategy
    */

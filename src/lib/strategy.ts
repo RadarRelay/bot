@@ -10,7 +10,7 @@ import prompt = require('prompt');
 const config = getConfig();
 
 /**
- * Abstract which defines some of the 
+ * Abstract which defines some of the
  * basic methods required for a bot strategy
  *
  * @param {RadarRelay} rr      instance of the RadarRelay SDK class
@@ -23,14 +23,14 @@ export abstract class Strategy<T extends BaseAccount> {
   protected _prompt: any;
   protected _ccxt: any;
   protected _conf: any;
-  
+
   constructor(rr: RadarRelay<T>, prompt: any, ccxt: any, config) {
     this._rr = rr;
     this._prompt = promisify(prompt.get);
     this._ccxt = ccxt;
     this._conf = config;
   }
-  
+
   /**
    * Check balances and allowances and
    * enable and wrap eth (if applicable)
@@ -47,13 +47,13 @@ export abstract class Strategy<T extends BaseAccount> {
         console.log(colors.magenta('Wrapping eth...'));
         const hash = await this._rr.account.wrapEthAsync(ethBal.minus(ethBal.times(0.02).toFixed(8)), {
           transactionOpts: {
-            gasPrice: config.gasPrice
+            gasPrice: new BigNumber(config.gasPrice)
           }
         });
         console.log(colors.cyan(`tx: ${hash}`));
       }
     }
-    
+
     // enable tokens
     const baseTokenAllowance = await this._rr.account.getTokenAllowanceAsync(market.baseTokenAddress);
     const quoteTokenAllowance = await this._rr.account.getTokenAllowanceAsync(market.quoteTokenAddress);
@@ -61,7 +61,7 @@ export abstract class Strategy<T extends BaseAccount> {
       console.log(colors.magenta(`Enabling ${market.id.split('-')[0]}...`));
       const hash = await this._rr.account.setUnlimitedTokenAllowanceAsync(market.baseTokenAddress, {
         transactionOpts: {
-          gasPrice: config.gasPrice
+          gasPrice: new BigNumber(config.gasPrice)
         }
       });
       console.log(colors.cyan(`tx: ${hash}`));
@@ -70,29 +70,29 @@ export abstract class Strategy<T extends BaseAccount> {
       console.log(colors.magenta(`Enabling ${market.id.split('-')[1]}...`));
       const hash = await this._rr.account.setUnlimitedTokenAllowanceAsync(market.quoteTokenAddress, {
         transactionOpts: {
-          gasPrice: config.gasPrice
+          gasPrice: new BigNumber(config.gasPrice)
         }
       });
       console.log(colors.cyan(`tx: ${hash}`));
     }
-    
+
     console.log('Done!');
   }
-  
+
   /**
    * Prompt the user for input
    * regarding run options
-   * 
+   *
    * @return {boolean} indicates whether or not to proceed
    */
   protected abstract async optionsPrompt(): Promise<boolean>;
-  
+
   /**
-   * Run method to start the 
+   * Run method to start the
    * bot strategies logic
    */
   public abstract async run(): Promise<void>;
-  
+
 }
 
 
