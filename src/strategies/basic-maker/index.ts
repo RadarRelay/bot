@@ -280,7 +280,6 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
     // Check Balances / Allowances
     // ---------------------------
     console.log(colors.green('\nVerifying balances and allowances...'));
-    console.log((await this._rr.markets.getAsync('sETH_10_30-DAI')));
     await this.checkBalancesAllowances(radarMarket);
 
     // Get tickers
