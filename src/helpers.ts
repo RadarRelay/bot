@@ -48,7 +48,7 @@ export function getConfig() {
  */
 export function marketToRadarFormat(market: string) {
   const radarMarket = (market.indexOf('WETH') > 0 || market.indexOf('weth') > 0)
-    ? market : market.replace(/ETH$/i, 'WETH');
+    ? market : market.replace(/\/ETH$/i, '/WETH');
   return radarMarket.toUpperCase().replace('/', '-');
 }
 
@@ -76,7 +76,7 @@ export function walletExists(): boolean {
 }
 
 /**
- * Get current gas price 
+ * Get current gas price
  * from ethgastation API
  *
  * @param {number} configGasPrice

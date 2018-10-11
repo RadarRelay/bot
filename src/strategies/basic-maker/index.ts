@@ -40,7 +40,7 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
     }
 
     try {
-      const rrMarket = await this._rr.markets.getAsync(marketToRadarFormat(market));
+      const rrMarket = await this._rr.markets.getAsync(market); // TODO: fix pls
       radar = await rrMarket.getTickerAsync();
 
       // Normalize the bid/ask nomenclature
@@ -267,15 +267,16 @@ export class BasicMakerStrategy<T extends BaseAccount> extends Strategy<T> {
       name: 'market',
       type: 'string',
       description: colors.cyan('Enter market'),
-      default: 'ZRX/ETH',
+      default: 'ZRX-ETH',
       required: true,
       conform: value => {
-        return /\w+\/\w+/.test(value);
+        return /\w+\-\w+/.test(value); // TODO: also fix pls
       }
     }]);
     const market = marketPrompt.market;
     console.log('selected:', colors.green(market));
-    const radarMarket = await this._rr.markets.getAsync(marketToRadarFormat(market));
+    // const marketParsed = marketToRadarFormat(market); // TODO: fix pls
+    const radarMarket = await this._rr.markets.getAsync(market);
 
     // Check Balances / Allowances
     // ---------------------------
